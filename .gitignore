@@ -20,3 +20,16 @@ data/db
 # Otros
 *.local
 *.cache
+
+# frontend
+frontend/.env
+/frontend/node_modules
+/frontend/.next/
+/frontend/dist/
+
+# backend
+/backend/.env
+/backend/logs/
+/backend/node_modules
+/backend/logs/
+/backend/tmp/
