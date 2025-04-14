@@ -1,0 +1,22 @@
+# Node.js
+node_modules/
+
+.env
+dist/
+logs/
+*.log
+npm-debug.log*
+
+# React
+frontend/build
+frontend/node_modules
+
+# VSCode
+.vscode/
+
+# MongoDB local
+data/db
+
+# Otros
+*.local
+*.cache
