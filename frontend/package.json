@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/Juacko0/NileybaSAC/issues"
   },
-  "homepage": "https://github.com/Juacko0/NileybaSAC#readme"
+  "homepage": "https://github.com/Juacko0/NileybaSAC#readme",
+  "dependencies": {
+    "frontend": "file:"
+  }
 }
