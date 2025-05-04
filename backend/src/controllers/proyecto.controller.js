@@ -1,5 +1,4 @@
 import Proyecto from "../models/Proyecto.js";
-
 //Crear nuevo proyecto
 export const crearProyecto = async (req, res) => {
     try {
@@ -25,17 +24,26 @@ export const listarProyectos = async (req, res) => {
 
 //Obtener un proyecto por ID
 export const obtenerProyecto = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const proyecto = await Proyecto.findById(id).populate('empleadosAsignados');
-        if (!proyecto) {
-            return res.status(404).json({ message: 'Proyecto no encontrado' });
-        }
-        res.status(200).json(proyecto);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error al obtener el proyecto' });
-    }
+  try {
+      const { id } = req.params;
+
+      // Validación del ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ message: 'ID de proyecto no válido' });
+      }
+
+      // Obtener el proyecto con empleados asignados poblados
+      const proyecto = await Proyecto.findById(id).populate('empleadosAsignados');
+
+      if (!proyecto) {
+          return res.status(404).json({ message: 'Proyecto no encontrado' });
+      }
+
+      res.status(200).json(proyecto);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error al obtener el proyecto' });
+  }
 };
 
 // Actualizar un proyecto
