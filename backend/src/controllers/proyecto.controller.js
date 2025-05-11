@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import Proyecto from "../models/Proyecto.js";
+
 //Crear nuevo proyecto
 export const crearProyecto = async (req, res) => {
     try {

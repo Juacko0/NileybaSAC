@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="stylesheet" href="styles.css">
+    <script src="../public/main.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>React App</title>
   </head>
   <body>
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span id="close" class="close">&times;</span>
+        <h2>Detalles del Proyecto</h2>
+        <div id="proyectoDetalles">
+          <!-- Aquí se mostrarán los detalles del proyecto -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Botón para abrir el modal -->
+    <button id="mostrarProyectoBtn">Mostrar Proyecto</button>
     <div id="root"></div>
   </body>
 </html>
