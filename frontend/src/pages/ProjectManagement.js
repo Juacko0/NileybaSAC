@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Paper, Typography, Button, TextField, Grid, List, ListItem, ListItemText } from '@mui/material';
-import { obtenerProyectos, crearProyecto, eliminarProyecto, obtenerProyectoPorId, agregarTarea, eliminarTarea, actualizarProyecto } from '../services/proyectosServices'; 
-import { Dialog, DialogTitle, DialogContent, DialogActions, MenuItem } from '@mui/material'; // asegúrate de importar estos
+import { obtenerProyectos, crearProyecto, eliminarProyecto, obtenerProyectoPorId, agregarTarea, eliminarTarea, actualizarProyecto, actualizarEstadoTarea } from '../services/proyectosServices'; 
+import { Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, Select } from '@mui/material'; // asegúrate de importar estos
+import ProgresoRadial from '../components/progresoRadial.jsx'; // Ajusta la ruta según tu estructura
 
 const ProjectManagement = () => {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -15,7 +16,6 @@ const [formularioProyecto, setFormularioProyecto] = useState({
   progreso: ''
 });
   const [proyectos, setProyectos] = useState([]);
-  const [nuevoProyecto, setNuevoProyecto] = useState('');
   const [tareas, setTareas] = useState([]);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
   const [nuevaTarea, setNuevaTarea] = useState('');
@@ -27,23 +27,20 @@ const [formularioProyecto, setFormularioProyecto] = useState({
   // Cargar proyectos cuando el componente se monta
   useEffect(() => {
     obtenerProyectos().then((data) => {
+      console.log("Proyectos obtenidos:", data);
       setProyectos(data);
     }).catch(error => {
       console.error("Error al obtener los proyectos:", error);
     });
   }, []);
 
-  // Función para crear un proyecto
-  const handleCrearProyecto = async () => {
-    if (!nuevoProyecto) return;
-    try {
-      const data = await crearProyecto({ nombre: nuevoProyecto });
-      setProyectos((prevProyectos) => [...prevProyectos, data]);
-      setNuevoProyecto('');
-    } catch (error) {
-      console.error("Error al crear el proyecto:", error);
-    }
-  };
+  useEffect(() => {
+  if (!modalAbierto && !modoEdicion) {
+    setFormularioProyecto({
+      nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', estado: 'pendiente', presupuesto: '', progreso: ''
+    });
+  }
+}, [modalAbierto, modoEdicion]);
 
   const handleEditarProyecto = (proyecto) => {
     setFormularioProyecto({
@@ -83,17 +80,16 @@ const [formularioProyecto, setFormularioProyecto] = useState({
   };
 
   // Función para agregar una tarea a un proyecto
-  const handleAgregarTarea = async () => {
-    if (!nuevaTarea || !proyectoSeleccionado) return;
-    try {
-      const tarea = await agregarTarea(proyectoSeleccionado._id, { descripcion: nuevaTarea });
-      setTareas((prevTareas) => [...prevTareas, tarea]);
-      setNuevaTarea('');
-    } catch (error) {
-      console.error("Error al agregar tarea:", error);
-    }
-  };
-
+const handleAgregarTarea = async () => {
+  if (!nuevaTarea || !proyectoSeleccionado) return;
+  try {
+    const tarea = await agregarTarea(proyectoSeleccionado._id, { titulo: nuevaTarea }); // <--- aquí
+    setTareas((prevTareas) => [...prevTareas, tarea]);
+    setNuevaTarea('');
+  } catch (error) {
+    console.error("Error al agregar tarea:", error);
+  }
+};
   // Función para eliminar una tarea
   const handleEliminarTarea = async (idTarea) => {
     try {
@@ -104,6 +100,18 @@ const [formularioProyecto, setFormularioProyecto] = useState({
     }
   };
 
+  const handleActualizarEstadoTarea = async (idTarea, nuevoEstado) => {
+    try {
+      const tareaActualizada = await actualizarEstadoTarea(proyectoSeleccionado._id, idTarea, nuevoEstado);
+      
+      setTareas((prevTareas) =>
+        prevTareas.map((tarea) => 
+          tarea._id === idTarea ? tareaActualizada : tarea))
+      ;
+    } catch (error) {
+      console.error("Error al actualizar estado de la tarea:", error);
+    }
+  }
   return (
     <Paper elevation={3} sx={{ padding: '20px', borderRadius: 2, backgroundColor: '#FFF', boxShadow: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -120,9 +128,11 @@ const [formularioProyecto, setFormularioProyecto] = useState({
       </Typography>
       <Grid container spacing={2} sx={{ marginTop: 1 }}>
   {proyectos.map((proyecto) => (
+    proyecto?._id && (
     <Grid item xs={12} md={6} lg={4} key={proyecto._id}>
       <Paper elevation={2} sx={{ padding: 2, borderRadius: 2 }}>
         <Typography variant="h6">{proyecto.nombre}</Typography>
+        <ProgresoRadial tareas={proyecto.tareas || []} />
         {proyecto.descripcion && (
           <Typography variant="body2" sx={{ marginBottom: 1 }}>
             {proyecto.descripcion.slice(0, 100)}...
@@ -155,7 +165,7 @@ const [formularioProyecto, setFormularioProyecto] = useState({
           variant="outlined"
           size="small"
           color="secondary"
-          onClick={() => handleEditarProyecto(proyecto)}
+          onClick={() => proyecto?._id && handleEditarProyecto(proyecto)}
           sx={{ marginTop: 1, marginRight: 1 }}
         >
           Editar
@@ -165,13 +175,14 @@ const [formularioProyecto, setFormularioProyecto] = useState({
           variant="outlined"
           size="small"
           color="error"
-          onClick={() => handleEliminarProyecto(proyecto._id)}
+          onClick={() => proyecto?._id && handleEliminarProyecto(proyecto._id)}
           sx={{ marginTop: 1 }}
         >
           Eliminar
         </Button>
-        <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)} fullWidth maxWidth="sm">
-  <DialogTitle>Nuevo Proyecto</DialogTitle>
+
+<Dialog open={modalAbierto} onClose={() => setModalAbierto(false)} fullWidth maxWidth="sm">
+  <DialogTitle>{modoEdicion ? 'Editar Proyecto' : 'Nuevo Proyecto'}</DialogTitle>
   <DialogContent>
     <TextField
       label="Nombre"
@@ -179,6 +190,7 @@ const [formularioProyecto, setFormularioProyecto] = useState({
       margin="dense"
       value={formularioProyecto.nombre}
       onChange={(e) => setFormularioProyecto({ ...formularioProyecto, nombre: e.target.value })}
+      required
     />
     <TextField
       label="Descripción"
@@ -238,39 +250,68 @@ const [formularioProyecto, setFormularioProyecto] = useState({
   <DialogActions>
     <Button onClick={() => setModalAbierto(false)}>Cancelar</Button>
     <Button
-  onClick={async () => {
-    try {
-      if (modoEdicion) {
-        const actualizado = await actualizarProyecto(idProyectoEditando, formularioProyecto);
-        setProyectos((prev) =>
-          prev.map((p) => (p._id === idProyectoEditando ? actualizado : p))
-        );
-      } else {
-        const nuevo = await crearProyecto(formularioProyecto);
-        setProyectos((prev) => [...prev, nuevo]);
-      }
+      variant="contained"
+      onClick={async () => {
+        try {
+          const {
+            nombre,
+            descripcion,
+            fechaInicio,
+            fechaFin,
+            estado,
+            presupuesto,
+            progreso,
+          } = formularioProyecto;
 
-      // Limpiar
-      setFormularioProyecto({
-        nombre: '', descripcion: '', fechaInicio: '', fechaFin: '', estado: 'pendiente', presupuesto: '', progreso: ''
-      });
-      setIdProyectoEditando(null);
-      setModoEdicion(false);
-      setModalAbierto(false);
-    } catch (error) {
-      console.error('Error al guardar proyecto:', error);
-    }
-  }}
-  variant="contained"
->
-  {modoEdicion ? 'Actualizar' : 'Guardar'}
-</Button>
+          if (!nombre || !fechaInicio || !fechaFin) {
+            alert("Por favor completa los campos obligatorios: Nombre, Fecha de Inicio y Fecha de Fin.");
+            return;
+          }
 
+          const datosProyecto = {
+            nombre,
+            descripcion,
+            fechaInicio,
+            fechaFin,
+            estado,
+            presupuesto: parseFloat(presupuesto) || 0,
+            progreso: parseFloat(progreso) || 0,
+          };
+
+          if (modoEdicion) {
+            const actualizado = await actualizarProyecto(idProyectoEditando, datosProyecto);
+            setProyectos((prev) =>
+              prev.map((p) => (p._id === idProyectoEditando ? actualizado : p))
+            );
+          } else {
+            const nuevo = await crearProyecto(datosProyecto);
+            setProyectos((prev) => [...prev, nuevo]);
+          }
+
+          setFormularioProyecto({
+            nombre: '',
+            descripcion: '',
+            fechaInicio: '',
+            fechaFin: '',
+            estado: 'pendiente',
+            presupuesto: '',
+            progreso: '',
+          });
+          setIdProyectoEditando(null);
+          setModoEdicion(false);
+          setModalAbierto(false);
+        } catch (error) {
+          console.error("Error al guardar proyecto:", error);
+          alert("Ocurrió un error al guardar el proyecto.");
+        }
+      }}
+    >
+      {modoEdicion ? 'Actualizar' : 'Guardar'}
+    </Button>
   </DialogActions>
 </Dialog>
-
       </Paper>
-    </Grid>
+    </Grid>)
   ))}
 </Grid>
 
@@ -297,8 +338,23 @@ const [formularioProyecto, setFormularioProyecto] = useState({
           {/* Lista de tareas */}
           <List>
             {tareas.map((tarea) => (
-              <ListItem key={tarea._id}>
-                <ListItemText primary={tarea.descripcion} />
+              <ListItem key={tarea._id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <ListItemText 
+                primary={tarea.titulo}
+                seccondary={`Estado: ${tarea.estado}`}
+                />
+
+                <Select
+                  value={tarea.estado}
+                  onChange={(e) => handleActualizarEstadoTarea(tarea._id, e.target.value)}
+                  size="small"
+                  sx={{ marginRight: 2 }}
+                >
+                  <MenuItem value="pendiente">pendiente</MenuItem>
+                  <MenuItem value="en progreso">en progreso</MenuItem>
+                  <MenuItem value="completada">completada</MenuItem>
+                </Select>
+
                 <Button onClick={() => handleEliminarTarea(tarea._id)} color="error">
                   Eliminar Tarea
                 </Button>

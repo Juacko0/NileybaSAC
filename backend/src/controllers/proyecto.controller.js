@@ -79,17 +79,31 @@ export const actualizarProyecto = async (req, res) => {
 
   // Agregar una tarea a un proyecto
 export const agregarTarea = async (req, res) => {
-    try {
-        const proyecto = await Proyecto.findById(req.params.id);
-        if (!proyecto) return res.status(404).json({ mensaje: 'Proyecto no encontrado' });
+  try {
+    const proyecto = await Proyecto.findById(req.params.id);
+    if (!proyecto) return res.status(404).json({ mensaje: 'Proyecto no encontrado' });
 
-        proyecto.tareas.push(req.body);
-        await proyecto.save();
-        res.status(200).json(proyecto);
-    } catch (error) {
-        res.status(500).json({ mensaje: 'Error al agregar tarea', error: error.message });
-    }
+    console.log("Datos recibidos en req.body:", req.body); // <-- Aquí
+    const { titulo, descripcion, fechaInicio, fechaFin, estado } = req.body;
+
+    proyecto.tareas.push({
+      titulo,
+      descripcion,
+      fechaInicio,
+      fechaFin,
+      estado
+    });
+
+    await proyecto.save();
+
+    const nuevaTarea = proyecto.tareas[proyecto.tareas.length - 1];
+    res.status(200).json(nuevaTarea);
+  } catch (error) {
+    console.error("Error en agregarTarea:", error); // <-- Esto ayuda mucho
+    res.status(500).json({ mensaje: 'Error al agregar tarea', error: error.message });
+  }
 };
+
 
 // Eliminar una tarea de un proyecto
 export const eliminarTarea = async (req, res) => {
@@ -108,23 +122,31 @@ export const eliminarTarea = async (req, res) => {
 
 // Actualizar el estado de una tarea dentro de un proyecto
 export const actualizarEstadoTarea = async (req, res) => {
-    try {
-        const { idProyecto, idTarea } = req.params;
-        const { estado } = req.body;
-
-        const proyecto = await Proyecto.findById(idProyecto);
-        if (!proyecto) return res.status(404).json({ mensaje: 'Proyecto no encontrado' });
-
-        const tarea = proyecto.tareas.id(idTarea);
-        if (!tarea) return res.status(404).json({ mensaje: 'Tarea no encontrada' });
-
-        tarea.estado = estado;
-        await proyecto.save();
-        res.status(200).json(proyecto);
-    } catch (error) {
-        res.status(500).json({ mensaje: 'Error al actualizar el estado de la tarea', error: error.message });
+  try {
+    const { idProyecto, idTarea } = req.params;
+    const { estado } = req.body;
+    console.log('Estado recibido:', estado);
+    // Validar estado permitido
+    const estadosPermitidos = ['pendiente', 'en progreso', 'completada'];
+    if (!estadosPermitidos.includes(estado)) {
+      return res.status(400).json({ mensaje: 'Estado no válido' });
     }
-}
+
+    const proyecto = await Proyecto.findById(idProyecto);
+    if (!proyecto) return res.status(404).json({ mensaje: 'Proyecto no encontrado' });
+
+    const tarea = proyecto.tareas.id(idTarea);
+    if (!tarea) return res.status(404).json({ mensaje: 'Tarea no encontrada' });
+
+    tarea.estado = estado;
+    await proyecto.save();
+
+    res.status(200).json(tarea); // Solo devolvemos la tarea actualizada
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al actualizar el estado de la tarea', error: error.message });
+  }
+};
+
 
 // Obtener resumen de avance del proyecto
 export const generarReporteProyecto = async (req, res) => {

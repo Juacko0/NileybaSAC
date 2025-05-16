@@ -29,6 +29,23 @@ const EmployeeManagement = () => {
     });
   }, []);
 
+  const handleNuevoEmpleado = () => {
+  setFormularioEmpleado({
+    dni: '',
+    nombre: '',
+    apellido: '',
+    telefono: '',
+    direccion: '',
+    rol: 'Operativo',
+    fechaIngreso: '',
+    estado: 'Activo',
+    implementos: []
+  });
+  setEmpleadoId(null);
+  setModoEdicion(false);
+  setModalAbierto(true);
+};
+
   // Función para crear un empleado
   const handleCrearEmpleado = async () => {
     try {
@@ -77,9 +94,9 @@ const EmployeeManagement = () => {
         Módulo de Gestión de Empleados
       </Typography>
 
-      <Button onClick={() => setModalAbierto(true)} color="primary" variant="contained" sx={{ marginTop: '10px' }}>
-        Crear Empleado
-      </Button>
+      <Button onClick={handleNuevoEmpleado} color="primary" variant="contained" sx={{ marginTop: '10px' }}>
+  Crear Empleado
+</Button>
 
       {/* Lista de empleados */}
       <Typography variant="h5" sx={{ marginTop: '20px' }}>
