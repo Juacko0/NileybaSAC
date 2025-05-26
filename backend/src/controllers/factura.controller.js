@@ -115,16 +115,16 @@ export const buscarFacturas = async (req, res) => {
 export const actualizarEstadoPago = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estadoPago } = req.body;
+    const { estado } = req.body;
 
-    const estadosValidos = ["Pagado", "Pendiente", "Vencido"];
-    if (!estadosValidos.includes(estadoPago)) {
+    const estadosValidos = ["pagada", "pendiente", "cancelada"];
+    if (!estadosValidos.includes(estado)) {
       return res.status(400).json({ mensaje: "Estado de pago no válido" });
     }
 
     const factura = await Factura.findByIdAndUpdate(
       id,
-      { estadoPago },
+      { estado },
       { new: true, runValidators: true }
     );
 
@@ -148,7 +148,7 @@ export const reporteIngresos = async (req, res) => {
 
     const filtro = {};
     if (fechaInicio && fechaFin) {
-      filtro.fechaEmision = {
+      filtro.fecha = {
         $gte: new Date(fechaInicio),
         $lte: new Date(fechaFin),
       };
@@ -156,7 +156,7 @@ export const reporteIngresos = async (req, res) => {
 
     const facturas = await Factura.find(filtro);
 
-    const totalIngresos = facturas.reduce((total, factura) => total + factura.total, 0);
+    const totalIngresos = facturas.reduce((total, factura) => total + factura.monto, 0);
 
     res.json({
       cantidadFacturas: facturas.length,
@@ -168,5 +168,94 @@ export const reporteIngresos = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ mensaje: "Error al generar el reporte de ingresos" });
+  }
+};
+
+// Función pura que obtiene balances, sin req ni res
+export const calcularBalances = async () => {
+  const ingresos = await Factura.aggregate([
+    { $match: { tipo: 'Ingreso' } },
+    { $group: { _id: null, total: { $sum: "$monto" } } }
+  ]);
+  console.log("Ingresos agregados:", ingresos);
+
+  const gastos = await Factura.aggregate([
+    { $match: { tipo: 'Gasto' } },
+    { $group: { _id: null, total: { $sum: "$monto" } } }
+  ]);
+  console.log("Gastos agregados:", gastos);
+
+  return {
+    ingresos: ingresos[0]?.total || 0,
+    gastos: gastos[0]?.total || 0
+  };
+};
+
+// Handler para Express que usa calcularBalances
+export const obtenerBalances = async (req, res) => {
+  try {
+    const balances = await calcularBalances();
+    res.json(balances);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: "Error al obtener los balances" });
+  }
+};
+
+export const calcularBalancesMensuales = async () => {
+  // Agregación para ingresos por mes
+  const ingresosPorMes = await Factura.aggregate([
+    { $match: { tipo: "Ingreso" } }, // recuerda que en tu modelo tipo es con mayúscula
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$fecha" } },
+        total: { $sum: "$monto" }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  // Agregación para gastos por mes
+  const gastosPorMes = await Factura.aggregate([
+    { $match: { tipo: "Gasto" } },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m", date: "$fecha" } },
+        total: { $sum: "$monto" }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  // Crear un mapa para juntar ambos resultados por mes
+  const mesesSet = new Set([
+    ...ingresosPorMes.map(i => i._id),
+    ...gastosPorMes.map(g => g._id)
+  ]);
+
+  const meses = Array.from(mesesSet).sort();
+
+  // Crear arreglo con la forma que necesita el frontend
+  const balancesMensuales = meses.map(mes => {
+    const ingreso = ingresosPorMes.find(i => i._id === mes)?.total || 0;
+    const gasto = gastosPorMes.find(g => g._id === mes)?.total || 0;
+    return {
+      name: mes,
+      ingreso,
+      gasto
+    };
+  });
+
+  return balancesMensuales;
+};
+
+// Handler para Express
+export const obtenerBalancesMensuales = async (req, res) => {
+  try {
+    const balances = await calcularBalancesMensuales();
+    res.json(balances);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: "Error al obtener balances mensuales" });
   }
 };
