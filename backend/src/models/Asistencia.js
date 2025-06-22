@@ -22,6 +22,11 @@ const AsistenciaSchema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
+  proyecto: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Proyecto',
+  required: false
+  },
   observacion: {
     type: String,
     trim: true,

@@ -6,7 +6,6 @@ import ProjectManagement from './pages/ProjectManagement';
 import EmployeeControl from './pages/EmployeeControl';
 import Billing from './pages/Billing';
 import DocumentManagement from './pages/DocumentManagement';
-
 function App() {
   return (
     <Router>
@@ -26,6 +25,7 @@ function App() {
             boxShadow: 3,
           }}
         >
+
           <Paper elevation={3} sx={{ padding: '20px', borderRadius: 2 }}>
             <Routes>
               <Route path="/project-management" element={<ProjectManagement />} />

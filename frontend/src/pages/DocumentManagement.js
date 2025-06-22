@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Paper, Typography, Button, Grid,
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -14,12 +15,20 @@ import {
 const Documentacion = () => {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [documentos, setDocumentos] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
+  const [filtroProyecto, setFiltroProyecto] = useState('');
   const [formulario, setFormulario] = useState({
     proyecto: '',
     descripcion: '',
     categoria: '',
     archivo: null
   });
+
+  useEffect(() => {
+  axios.get('http://localhost:5000/api/proyectos/nombres')
+    .then(res => setProyectos(res.data))
+    .catch(err => console.error("Error al cargar proyectos:", err));
+  }, []);
 
   useEffect(() => {
     cargarDocumentos();
@@ -76,41 +85,62 @@ const Documentacion = () => {
   }
 };
 
+  const documentosFiltrados = documentos.filter(doc =>
+  doc.proyecto?.nombre?.toLowerCase().includes(filtroProyecto.toLowerCase())
+  );
+
   return (
     <Paper sx={{ p: 3, borderRadius: 2 }}>
       <Typography variant="h4" mb={2}>Módulo Documental</Typography>
       <Button variant="contained" onClick={() => setModalAbierto(true)}>Agregar Documento</Button>
-
+      <TextField
+        label="Buscar por Proyecto"
+        variant="outlined"
+        fullWidth
+        margin="normal"
+        value={filtroProyecto}
+        onChange={(e) => setFiltroProyecto(e.target.value)}
+      />
       <Grid container spacing={2} mt={1}>
-        {documentos.map(doc => (
-          <Grid item xs={12} md={6} key={doc._id}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6">{doc.nombreArchivo}</Typography>
-              <Typography variant="body2"><strong>Proyecto:</strong> {doc.proyecto?.nombre || doc.proyecto}</Typography>
-              <Typography variant="body2"><strong>Categoría:</strong> {doc.categoria}</Typography>
-              {doc.descripcion && <Typography variant="body2"><strong>Descripción:</strong> {doc.descripcion}</Typography>}
-              <Button size="small" sx={{ mt: 1, mr: 1 }} variant="outlined"
-                onClick={() => handleVisualizarArchivo(doc.nombreArchivo)}>
-                Visualizar
-              </Button>
-              <Button size="small" color="error" sx={{ mt: 1 }}
-                onClick={() => handleEliminarDocumento(doc.nombreArchivo)}>
-                Eliminar
-              </Button>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
+  {documentosFiltrados.map(doc => (
+    <Grid item xs={12} md={6} key={doc._id}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6">{doc.nombreArchivo}</Typography>
+            <Typography variant="body2"><strong>Proyecto:</strong> {doc.proyecto?.nombre || doc.proyecto}</Typography>
+            <Typography variant="body2"><strong>Categoría:</strong> {doc.categoria}</Typography>
+            {doc.descripcion && (
+              <Typography variant="body2"><strong>Descripción:</strong> {doc.descripcion}</Typography>
+            )}
+            <Button size="small" sx={{ mt: 1, mr: 1 }} variant="outlined"
+              onClick={() => handleVisualizarArchivo(doc.nombreArchivo)}>
+              Visualizar
+            </Button>
+            <Button size="small" color="error" sx={{ mt: 1 }}
+              onClick={() => handleEliminarDocumento(doc.nombreArchivo)}>
+              Eliminar
+            </Button>
+          </Paper>
+        </Grid>
+      ))}
+    </Grid>
 
       <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)}>
         <DialogTitle>Nuevo Documento</DialogTitle>
         <DialogContent>
           <TextField
             label="Proyecto"
-            fullWidth margin="dense"
+            fullWidth
+            margin="dense"
+            select
             value={formulario.proyecto}
             onChange={e => setFormulario({ ...formulario, proyecto: e.target.value })}
-          />
+          >
+            {proyectos.map(proy => (
+              <MenuItem key={proy._id} value={proy._id}>
+                {proy.nombre}
+              </MenuItem>
+            ))}
+          </TextField>
           <TextField
             label="Categoría"
             fullWidth margin="dense"

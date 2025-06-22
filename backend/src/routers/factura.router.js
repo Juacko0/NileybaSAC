@@ -8,7 +8,8 @@ import {
   buscarFacturas,
   reporteIngresos,
   actualizarEstadoPago,
-  obtenerBalances
+  obtenerBalances,
+  obtenerBalancesMensuales
 } from '../controllers/factura.controller.js';
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.delete('/:id', eliminarFactura); // Eliminar una factura por ID
 router.get('/buscar/filtro', buscarFacturas); // Buscar por cliente o rango de fechas
 router.get('/reportes/ingresos', reporteIngresos); // Reporte de ingresos por fechas
 router.patch('/:id/estado-pago', actualizarEstadoPago); // Actualizar solo estado de pago
+router.get('/balances-mensuales', obtenerBalancesMensuales); // Nuevo: Balance mensual por proyecto
 
 export default router;

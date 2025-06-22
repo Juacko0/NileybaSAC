@@ -195,3 +195,12 @@ export const obtenerTareasProyecto = async (req, res) => {
         res.status(500).json({ mensaje: 'Error al obtener las tareas del proyecto', error: error.message });
     }
 };
+
+export const nombresProyectos = async (req, res) => {
+  try {
+    const proyectos = await Proyecto.find({}, '_id nombre'); // Solo extrae id y nombre
+    res.json(proyectos);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener nombres de proyectos' });
+  }
+};

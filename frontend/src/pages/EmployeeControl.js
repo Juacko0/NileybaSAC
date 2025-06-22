@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import * as XLSX from 'xlsx';
+import {saveAs} from 'file-saver';
 import { Paper, Typography, Button, TextField, List, ListItem, ListItemText, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem } from '@mui/material';
 import { obtenerEmpleados, crearEmpleado, eliminarEmpleado, obtenerEmpleadoPorId, actualizarEmpleado } from '../services/empleadosServices';
 import { crearAsistencia } from '../services/empleadosServices';
 import {Checkbox, FormControlLabel} from '@mui/material';
+import AsistenciasFiltradas from '../components/AsistenciasFiltradas';
 
 const EmployeeManagement = () => {
   const [modalAsistenciaAbierto, setModalAsistenciaAbierto] = useState(false);
@@ -15,6 +19,7 @@ const EmployeeManagement = () => {
     telefono: '',
     direccion: '',
     rol: 'Operativo',
+    proyecto: '',
     fechaIngreso: '',
     estado: 'Activo',
     implementos: []
@@ -23,15 +28,26 @@ const EmployeeManagement = () => {
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [empleadoId, setEmpleadoId] = useState(null);
+  const [mostrarFiltroAsistencias, setMostrarFiltroAsistencias] = useState(false);
+  const [abrirModalFiltro, setAbrirModalFiltro] = useState(false);
+  const [asistenciasFiltradas, setAsistenciasFiltradas] = useState([]);
+  const [proyectos, setProyectos] = useState([]);
 
-  // Cargar empleados cuando el componente se monta
   useEffect(() => {
-    obtenerEmpleados().then((data) => {
-      setEmpleados(data);
-    }).catch(error => {
-      console.error("Error al obtener los empleados:", error);
-    });
-  }, []);
+  const fetchData = async () => {
+    try {
+      const empleadosData = await obtenerEmpleados();
+      setEmpleados(empleadosData);
+
+      const proyectosResponse = await axios.get('http://localhost:5000/api/proyectos/nombres');
+      setProyectos(proyectosResponse.data);
+    } catch (error) {
+      console.error('Error al cargar datos:', error);
+    }
+  };
+
+  fetchData();
+}, []);
 
   const handleGuardarAsistencia = async () => {
   try {
@@ -62,6 +78,7 @@ const EmployeeManagement = () => {
     telefono: '',
     direccion: '',
     rol: 'Operativo',
+    proyecto: '',
     fechaIngreso: '',
     estado: 'Activo',
     implementos: []
@@ -94,6 +111,7 @@ const EmployeeManagement = () => {
       telefono: empleado.telefono || '',
       direccion: empleado.direccion || '',
       rol: empleado.rol || 'Operativo',
+      proyecto: empleado.proyecto || '',
       fechaIngreso: empleado.fechaIngreso || '',
       estado: empleado.estado || 'Activo',
       implementos: empleado.implementos || []
@@ -112,24 +130,101 @@ const EmployeeManagement = () => {
       console.error("Error al eliminar el empleado:", error);
     }
   };
+  const exportarAExcel = () => {
+  const data = empleados.map(emp => ({
+    DNI: emp.dni,
+    Nombre: emp.nombre,
+    Apellido: emp.apellido,
+    Teléfono: emp.telefono,
+    Dirección: emp.direccion,
+    Rol: emp.rol,
+    Proyecto: emp.proyecto?.nombre || emp.proyecto,
+    FechaIngreso: emp.fechaIngreso?.substring(0, 10),
+    Estado: emp.estado
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Empleados");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  saveAs(blob, `Empleados_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+const exportarAsistenciasFiltradas = () => {
+  if (asistenciasFiltradas.length === 0) {
+    alert("No hay asistencias filtradas para exportar.");
+    return;
+  }
+
+  const data = asistenciasFiltradas.map((asis) => ({
+    Nombre: asis.idEmpleado?.nombre || "Desconocido",
+    Apellido: asis.idEmpleado?.apellido || "",
+    Fecha: new Date(asis.fecha).toLocaleDateString(),
+    Estado: asis.presente ? "Presente" : "Ausente",
+    Observación: asis.observacion || "",
+    EPP_Entregado: asis.entregasEPP?.entregado ? "Sí" : "No",
+    EPP_Items: asis.entregasEPP?.items?.map(item =>
+      `${item.nombre} (${item.cantidad}) [${item.estado}]`
+    ).join(", ") || "Ninguno"
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencias Filtradas");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  saveAs(blob, `Asistencias_Filtradas_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
 
   return (
     <Paper elevation={3} sx={{ padding: '20px', borderRadius: 2, backgroundColor: '#FFF', boxShadow: 3 }}>
       <Typography variant="h4" gutterBottom>
         Módulo de Gestión de Empleados
       </Typography>
+      
 
       <Button onClick={handleNuevoEmpleado} color="primary" variant="contained" sx={{ marginTop: '10px' }}>
-  Crear Empleado
-</Button>
+      Crear Empleado
+      </Button>
+      
       <Button
-  onClick={() => {
-    const asistenciaInicial = {};
-    empleados.forEach(emp => {
-      asistenciaInicial[emp._id] = { estado: 'Presente', observacion: '' };
-    });
-    setRegistroAsistencia(asistenciaInicial);
-    setModalAsistenciaAbierto(true);
+      
+  onClick={async () => {
+    try {
+      const hoy = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+
+      const response = await axios.get(`http://localhost:5000/api/asistencias/registrada/${hoy}`);
+
+      if (response.data?.length > 0) {
+        const confirmar = window.confirm("⚠️ Ya se ha tomado asistencia hoy. ¿Deseas modificarla?");
+        if (!confirmar) return;
+
+        const asistenciaExistente = {};
+        response.data.forEach((asis) => {
+          asistenciaExistente[asis.idEmpleado] = {
+            estado: asis.presente ? 'Presente' : 'Ausente',
+            observacion: asis.observacion || '',
+            entregasEPP: asis.entregasEPP || { entregado: false, items: [] }
+          };
+        });
+
+        setRegistroAsistencia(asistenciaExistente);
+        setModalAsistenciaAbierto(true);
+      } else {
+        const asistenciaInicial = {};
+        empleados.forEach(emp => {
+          asistenciaInicial[emp._id] = { estado: 'Presente', observacion: '', entregasEPP: { entregado: false, items: [] } };
+        });
+        setRegistroAsistencia(asistenciaInicial);
+        setModalAsistenciaAbierto(true);
+      }
+    } catch (error) {
+      console.error("❌ Error al verificar asistencias:", error);
+      alert("Error al verificar asistencias. Intenta nuevamente.");
+    }
   }}
   color="secondary"
   variant="outlined"
@@ -137,8 +232,53 @@ const EmployeeManagement = () => {
 >
   Tomar Asistencia
 </Button>
+      <Button
+  onClick={() => setAbrirModalFiltro(true)}
+  color="info"
+  variant="outlined"
+  sx={{ marginTop: '10px', marginLeft: '10px' }}
+>
+  Filtrar Asistencias
+</Button>
+<Button
+  onClick={exportarAExcel}
+  color="success"
+  variant="outlined"
+  sx={{ marginTop: '10px', marginLeft: '10px' }}
+>
+  Exportar a Excel
+</Button>
 
+<Dialog
+  open={abrirModalFiltro}
+  onClose={() => setAbrirModalFiltro(false)}
+  fullWidth
+  maxWidth="md"
+>
+  <DialogTitle>Filtrar Asistencias</DialogTitle>
+  <DialogContent>
+    <AsistenciasFiltradas
+      onClose={() => setAbrirModalFiltro(false)}
+      setAsistenciasGlobal={setAsistenciasFiltradas}
+    />
+    {asistenciasFiltradas.length > 0 && (
+    <Button
+      onClick={exportarAsistenciasFiltradas}
+      variant="outlined"
+      color="success"
+      sx={{ mt: 2 }}
+    >
+      Exportar Asistencias a Excel
+    </Button>
+  )}
+  </DialogContent>
+</Dialog>
 
+    {mostrarFiltroAsistencias && (
+  <div style={{ marginTop: '20px' }}>
+    <AsistenciasFiltradas />
+  </div>
+)}
       {/* Lista de empleados */}
       <Typography variant="h5" sx={{ marginTop: '20px' }}>
         Empleados
@@ -222,6 +362,20 @@ const EmployeeManagement = () => {
             <MenuItem value="Gerente">Gerente</MenuItem>
             <MenuItem value="Jefe de Área">Jefe de Área</MenuItem>
             <MenuItem value="Ayudante">Ayudante</MenuItem>
+          </TextField>
+          <TextField
+            select
+            label="Proyecto"
+            fullWidth
+            margin="dense"
+            value={formularioEmpleado.proyecto}
+            onChange={(e) => setFormularioEmpleado({ ...formularioEmpleado, proyecto: e.target.value })}
+          >
+            {proyectos.map((proy) => (
+              <MenuItem key={proy._id} value={proy._id}>
+                {proy.nombre}
+              </MenuItem>
+            ))}
           </TextField>
           <TextField
             label="Fecha de Ingreso"
@@ -447,4 +601,5 @@ const EmployeeManagement = () => {
   );
 };
 
+  
 export default EmployeeManagement;

@@ -9,9 +9,12 @@ import {
     eliminarTarea,
     generarReporteProyecto,
     actualizarEstadoTarea,
-    obtenerTareasProyecto
+    obtenerTareasProyecto,
+    nombresProyectos
 } from '../controllers/proyecto.controller.js';
 const router = express.Router();
+
+router.get('/nombres', nombresProyectos); // Obtener los nombres de todos los proyectos
 
 // Rutas para los proyectos
 router.post('/', crearProyecto); // Crear un nuevo proyecto
@@ -20,6 +23,7 @@ router.get('/:id', obtenerProyecto); // Obtener un proyecto por ID
 router.put('/:id', actualizarProyecto); // Actualizar un proyecto por ID
 router.delete('/:id', eliminarProyecto); // Eliminar un proyecto por ID
 router.get('/:id/reporte', generarReporteProyecto); // Generar un reporte de avance del proyecto
+
 
 //Tareas dentro de proyectos
 router.post('/:id/tareas', agregarTarea); // Agregar una tarea a un proyecto

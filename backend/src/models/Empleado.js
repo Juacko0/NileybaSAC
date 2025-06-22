@@ -42,6 +42,12 @@ const EmpleadoSchema = new mongoose.Schema({
     enum: ['Operativo', 'Supervisor', 'Gerente', 'Jefe de Área', 'Ayudante'],
     required: true
   },
+  proyecto: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: 'Proyecto',
+    trim: true
+  },
   fechaIngreso: {
     type: Date,
     required: true

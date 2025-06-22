@@ -6,6 +6,7 @@ let gfs;
 let bucket;
 const conn = mongoose.connection;
 
+
 // Inicializar GridFS una vez que se abre la conexión
 conn.once('open', () => {
   bucket = new mongoose.mongo.GridFSBucket(conn.db, {
@@ -110,10 +111,7 @@ export const actualizarDocumento = async (req, res) => {
       { nombreArchivo: req.params.filename },
       {
         descripcion,
-        categoria,
-        estado,
-        version,
-        ultimaModificacion: Date.now(),
+        categoria
       },
       { new: true }
     );
