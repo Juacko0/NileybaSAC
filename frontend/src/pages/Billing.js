@@ -164,15 +164,14 @@ const gastosPaginados = facturasGasto.slice(
           <Typography variant="h5" gutterBottom>Ingresos</Typography>
           {ingresosPaginados.map(factura => (
             <Paper key={factura._id} elevation={2} sx={{ padding: 2, marginBottom: 2 }}>
-              <Typography variant="h6">{factura.cliente || 'Sin cliente'}</Typography>
+              {factura.descripcion && (
+              <Typography variant="body2"><strong>Descripción:</strong> {factura.descripcion}</Typography>)}
               <Typography variant="body2"><strong>Fecha:</strong> {factura.fecha}</Typography>
               <Typography variant="body2"><strong>Monto:</strong> S/ {factura.monto}</Typography>
               <Typography variant="body2">
                 <strong>Proyecto:</strong> {obtenerNombreProyecto(factura.proyecto)}
               </Typography>
-              {factura.descripcion && (
-                <Typography variant="body2"><strong>Descripción:</strong> {factura.descripcion}</Typography>
-              )}
+              
               <Button
                 size="small"
                 onClick={() => {
