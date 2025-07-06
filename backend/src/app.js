@@ -10,7 +10,9 @@ import Documental from './routers/documental.routers.js';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://nileyba-frontend.onrender.com' // Solo permite tu frontend
+}));
 app.use(express.json());
 
 //Rutas
