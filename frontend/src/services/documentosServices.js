@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/documentos'; // Cambia a tu backend real
+const API_URL = `${process.env.REACT_APP_API_URL}/api/documentos`; // Cambia a tu backend real
 
 // Registrar un nuevo documento (el archivo se envía con FormData)
 export const registrarDocumento = async (formData) => {
@@ -38,7 +38,7 @@ export const obtenerArchivo = async (filename) => {
 
 // Eliminar documento
 export const eliminarDocumento = async (filename) => {
-  const res = await fetch(`http://localhost:5000/api/documentos/${filename}`, {
+  const res = await fetch(`${process.env.REACT_APP_API_URL}/api/documentos/${filename}`, {
     method: 'DELETE',
   });
   if (!res.ok) {

@@ -39,7 +39,7 @@ const EmployeeManagement = () => {
       const empleadosData = await obtenerEmpleados();
       setEmpleados(empleadosData);
 
-      const proyectosResponse = await axios.get('http://localhost:5000/api/proyectos/nombres');
+      const proyectosResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/proyectos/nombres`);
       setProyectos(proyectosResponse.data);
     } catch (error) {
       console.error('Error al cargar datos:', error);
@@ -196,7 +196,7 @@ const exportarAsistenciasFiltradas = () => {
     try {
       const hoy = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
 
-      const response = await axios.get(`http://localhost:5000/api/asistencias/registrada/${hoy}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/asistencias/registrada/${hoy}`);
 
       if (response.data?.length > 0) {
         const confirmar = window.confirm("⚠️ Ya se ha tomado asistencia hoy. ¿Deseas modificarla?");

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/empleados'; // Asegúrate de usar la URL correcta para tu API
+const API_URL = `${process.env.REACT_APP_API_URL}/api/empleados`; // Asegúrate de usar la URL correcta para tu API
 
 // Funciones para manejar empleados
 export const obtenerEmpleados = async () => {
@@ -30,31 +30,31 @@ export const eliminarEmpleado = async (id) => {
 
 // Obtener todas las asistencias
 export const obtenerAsistencias = async () => {
-  const response = await axios.get(`http://localhost:5000/api/asistencias`);
+  const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/asistencias`);
   return response.data;
 };
 
 // Obtener asistencias por ID de empleado
 export const obtenerAsistenciasPorEmpleado = async (empleadoId) => {
-  const response = await axios.get(`http://localhost:5000/api/asistencias/${empleadoId}`);
+  const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/asistencias/${empleadoId}`);
   return response.data;
 };
 
 // Crear una nueva asistencia
 export const crearAsistencia = async (empleadoId, asistenciaData) => {
-  const response = await axios.post(`http://localhost:5000/api/asistencias/${empleadoId}`, asistenciaData);
+  const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/asistencias/${empleadoId}`, asistenciaData);
   return response.data;
 };
 
 // Actualizar una asistencia específica por su ID
 export const actualizarAsistencia = async (asistenciaId, asistenciaData) => {
-  const response = await axios.put(`http://localhost:5000/api/asistencias/actualizar/${asistenciaId}`, asistenciaData);
+  const response = await axios.put(`${process.env.REACT_APP_API_URL}/api/asistencias/actualizar/${asistenciaId}`, asistenciaData);
   return response.data;
 };
 
 // Eliminar una asistencia específica por su ID
 export const eliminarAsistencia = async (asistenciaId) => {
-  const response = await axios.delete(`http://localhost:5000/api/asistencias/eliminar/${asistenciaId}`);
+  const response = await axios.delete(`${process.env.REACT_APP_API_URL}/api/asistencias/eliminar/${asistenciaId}`);
   return response.data;
 };
 

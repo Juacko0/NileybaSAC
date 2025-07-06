@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_BASE_URL = 'http://localhost:5000/api/facturas'; // Ajusta esto a tu backend real
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api/facturas`; // Ajusta esto a tu backend real
 
 export const obtenerFacturas = async () => {
   try {
@@ -42,13 +42,13 @@ export const obtenerBalances = async () => {
 };
 
 export const obtenerBalancesMensuales = async (proyectoId) => {
-  const res = await axios.get('http://localhost:5000/api/facturas/balances-mensuales', {
+  const res = await axios.get(`${API_BASE_URL}/api/facturas/balances-mensuales`, {
     params: { proyecto: proyectoId }
   });
   return res.data;
 };
 
 export const actualizarFactura = async (id, datos) => {
-  const res = await axios.put(`http://localhost:5000/api/facturas/${id}`, datos);
+  const res = await axios.put(`${API_BASE_URL}/api/facturas/${id}`, datos);
   return res.data;
 };

@@ -25,7 +25,7 @@ const Documentacion = () => {
   });
 
   useEffect(() => {
-  axios.get('http://localhost:5000/api/proyectos/nombres')
+  axios.get(`${process.env.REACT_APP_API_URL}/api/proyectos/nombres`)
     .then(res => setProyectos(res.data))
     .catch(err => console.error("Error al cargar proyectos:", err));
   }, []);
@@ -70,7 +70,7 @@ const Documentacion = () => {
   };
 
   const handleVisualizarArchivo = (filename) => {
-  const url = `http://localhost:5000/api/documentos/archivo/${filename}`;
+  const url = `${process.env.REACT_APP_API_URL}/api/documentos/archivo/${filename}`;
   window.open(url, '_blank');
 };
 

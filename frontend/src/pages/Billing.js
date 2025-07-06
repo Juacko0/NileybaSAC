@@ -74,7 +74,7 @@ const facturasPorPagina = 3;
   }, []);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/proyectos/nombres')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/proyectos/nombres`)
       .then(res => setProyectos(res.data))
       .catch(err => console.error('Error al cargar proyectos', err));
   }, []);

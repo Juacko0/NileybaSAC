@@ -12,7 +12,7 @@ const AsistenciasFiltradas = ( {setAsistenciasGlobal}) => {
   });
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/proyectos/nombres')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/proyectos/nombres`)
       .then(res => setProyectos(res.data))
       .catch(err => console.error('Error al obtener proyectos:', err));
   }, []);
@@ -21,7 +21,7 @@ const AsistenciasFiltradas = ( {setAsistenciasGlobal}) => {
     const { proyecto, desde, hasta } = filtros;
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/asistencias/filtrar`, {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/asistencias/filtrar`, {
         params: { proyecto, desde, hasta }
       });
       setAsistencias(res.data);
